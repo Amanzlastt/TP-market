@@ -15,8 +15,8 @@ A modern e-commerce platform focused on mobile phones, PCs, and tablets. Built w
 ## Tech Stack
 
 - **Backend:** Django, Django REST Framework, PostgreSQL, SimpleJWT
-- **Frontend:** Next.js, TypeScript, Tailwind CSS, React Query
-- **Deployment:** Render/Railway (backend), Vercel/Netlify (frontend)
+- **Frontend:** Next.js, TypeScript, Tailwind CSS
+
 
 ## Getting Started
 
@@ -42,11 +42,3 @@ repo-root/
 ├── backend/   # Django API
 └── frontend/  # Next.js app
 ```
-
-## Contribution Guidelines
-- Fork the repo and create a feature branch
-- Commit your changes with clear messages
-- Open a pull request for review
-
-## License
-This project is licensed under the MIT License. 
