@@ -9,12 +9,13 @@ class User(AbstractUser):
     username = models.CharField(max_length=150, unique=True)
     USERNAME_FIELD = 'username'
     EMAIL_FIELD = 'email'
+    REQUIRED_FIELDS = ['email']
 
 
 class Product(models.Model):
     PRODUCT_TYPES = [
         ("mobile",'Mobile Phone'),
-        ('pc', 'pc'),
+        ('laptop', 'Laptop'),
         ('tablet', 'Tablet',)
     ]
 

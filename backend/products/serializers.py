@@ -27,7 +27,7 @@ class UserRegisterationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'first_name','last_name']
+        fields = ['email', 'username', 'password', 'first_name','last_name']
 
     def create(self, validated_data):
         password = validated_data.pop('password')
@@ -48,3 +48,19 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = '__all__'
         read_only_fields = ['created_at', 'updated_at']
+    
+    def validate_specifications(self, value):
+        """
+        **Objective**: Handle specifications from form-data
+        **Key Concepts**:
+        - value: Can be dict (from JSON) or string (from form-data)
+        - json.loads(): Convert string to dict if needed
+        """
+
+        import json 
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError("Invalid JSON format fot specifications")
+        return value

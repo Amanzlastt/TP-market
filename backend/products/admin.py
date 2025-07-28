@@ -10,7 +10,7 @@ class UserAdmin(admin.ModelAdmin):
     - search_fields: Fields to search by
     - readonly_fields: Fields that can't be edited
     """
-    list_display = ['email','first_name','last_name', 'date_joined']
+    list_display = ['username', 'email','first_name','last_name', 'date_joined']
     search_fields = ['email', 'first_name', 'last_name']
     readonly_fields = ['date_joined']
 

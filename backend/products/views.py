@@ -1,8 +1,9 @@
-from rest_framework import veiwsets, status, filters
+from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action 
 from rest_framework.response import Response
 from rest_framework.permissions import  IsAuthenticated, IsAdminUser, AllowAny
 from django.contrib.auth import authenticate
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework_simplejwt.tokens import RefreshToken
 # from rest_framework_simplejwt.tokens import RefreshToken 
 from .models import User, Product
@@ -13,7 +14,7 @@ from .serializers import (
 )
 
 
-class AuthViewSet(veiwsets.Viewset):
+class AuthViewSet(viewsets.ViewSet):
     """
     **Objective**: Handle user authentication (login/register)
     **Key Concepts**:
@@ -50,31 +51,50 @@ class AuthViewSet(veiwsets.Viewset):
     @action(detail=False, methods=['post'])
     def login(self, request):
         """
-        **Objective**: Authenticate user and return JWT tokens
-        **Key Concepts**:
-        - authenticate(): Django's built-in authentication
-        - RefreshToken.for_user(): Generate JWT tokens
+        Login with username OR email and password
         """
-
-        email = request.data.get('email')
+        username_or_email = request.data.get('username') or request.data.get('email')
         password = request.data.get('password')
-
-        user  = authenticate(email=email, password=password)
-        if user:
+        
+        if not username_or_email or not password:
+            return Response(
+                {'error': 'Username/email and password are required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Try to find user by username or email
+        try:
+            if '@' in username_or_email:
+                # It's an email
+                user = User.objects.get(email=username_or_email)
+            else:
+                # It's a username
+                user = User.objects.get(username=username_or_email)
+        except User.DoesNotExist:
+            return Response(
+                {'error': 'User not found'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        # Authenticate the user
+        user = authenticate(username=user.username, password=password)
+        if user and user.is_active:
             refresh = RefreshToken.for_user(user)
-            return Response ({
+            return Response({
                 'user': UserSerializer(user).data,
-                'tokens':{
+                'tokens': {
                     'access': str(refresh.access_token),
                     'refresh': str(refresh)
                 }
             })
-        return Response(
-            {'error':"Invalid credentials"},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-    
-class ProductViewset(veiwsets.ModeViewset):
+        else:
+            return Response(
+                {'error': 'Invalid credentials'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        
+class ProductViewSet(viewsets.ModelViewSet):
     """
     **Objective**: Handle all product-related operations (CRUD)
     **Key Concepts**:
@@ -105,7 +125,35 @@ class ProductViewset(veiwsets.ModeViewset):
             permission_classes = [IsAdminUser]
         else:
             permission_classes = [IsAuthenticated]
-        return [permisson() for permission in permission_classes]
+        return [permission() for permission in permission_classes]
+    
+    # @action(detail=False, methods=['POST'])
+    def create(self, request, *args, **kwargs):
+        """
+        **Objective**: Custom product creation with validation
+        **Key Concepts**:
+        - Custom validation logic
+        - Error handling
+        - Custom response format
+        """
+        print(f"Received product data: {request.data}")  # Debug
+        
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            print(f"Validated data: {serializer.validated_data}")  # Debug
+            
+            product = serializer.save()
+            
+            print(f"Product created: {product.name}")  # Debug
+            
+            return Response({
+                'message': 'Product created successfully',
+                'product': serializer.data
+            }, status=status.HTTP_201_CREATED)
+        else:
+            print(f"Validation errors: {serializer.errors}")  # Debug
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
     @action(detail=False, methods=['get'])
